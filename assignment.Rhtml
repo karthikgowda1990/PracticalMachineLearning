@@ -1,0 +1,105 @@
+<html>
+
+<head>
+<title>Coursea Practical Machine Learning Project</title>
+</head>
+
+<p>Introduction</p>
+<p>Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it.  
+</p>
+
+<p>
+The goal is to predict Human Acticity Recognition for weight lifting excercise based on the data collected sensors placed on arm, belt, forearm and dumbbell.
+The excerise performed was Barbel lifts in 5 different ways
+Class A - correct way of preforming barbell lifts
+Class B - Throwing the elbows to the front
+Class C - Lifting the dumbbell only halfway 
+Class D - Lowering the dumbbell only halfway
+Class E - Throwing the hips to the front
+</p>
+
+<p>Thanks to the autors (Ugulino,W.; Cardador,D.; Vega,K.; Velloso,E.; Milidiu, R.; Fuks, H.) of the publication [WearableComputing: Accelerometers' Data Classification of Body Posturesand Movements](http://groupware.les.inf.puc-rio.br/work.jsf?p1=10335) for generously allowing the data collected to be used for this project.</p>   
+
+<p>Summary</p>
+
+<p>Read csv data files</p>
+
+<p>
+The training data set contains 19622 observations and 160 variables, and the testing data set contains 20 observations and 160 variables.The "classe" variable in the training set is the outcome to predict. 
+</p>
+
+<p>Data cleaning - remove Columns with NA and remove unwanted timestamp information 
+</p>
+
+<p>Set seed for repetative output</p>
+
+<p>Split the training data set into 70% training data set and 30% for cross validation</p>
+
+<p>
+Data modelling
+</p>
+
+<p>
+Random Forest Algorithm is used as predictive model for activity recognition because of its accuracy and its automatically picks imprtant variables</p>
+<p>
+5 fold cross validation is used in the algorithm
+</p>
+
+
+
+<!--begin.rcode
+
+library(caret)
+library(rpart)
+library(rpart.plot)
+library(randomForest)
+library(corrplot)
+
+trainRawData <- read.csv("pml-training.csv")
+testRawData <- read.csv("pml-testing.csv")
+
+dim(trainRawData)
+dim(testRawData)
+
+sum(complete.cases(trainRawData))
+
+trainRawData <- trainRawData[, colSums(is.na(trainRawData)) == 0] 
+testRawData <- testRawData[, colSums(is.na(testRawData)) == 0] 
+
+trainRawData$classe = factor(trainRawData$classe)
+classe <- trainRawData$classe
+trainRemove <- grepl("^X|timestamp|window", names(trainRawData))
+trainRawData <- trainRawData[, !trainRemove]
+trainCleaned <- trainRawData[, sapply(trainRawData, is.numeric)]
+trainCleaned$classe <- classe
+testRemove <- grepl("^X|timestamp|window", names(testRawData))
+testRawData <- testRawData[, !testRemove]
+testCleaned <- testRawData[, sapply(testRawData, is.numeric)]
+set.seed(1123)
+inTrain <- createDataPartition(trainCleaned$classe, p=0.70, list=F)
+trainData <- trainCleaned[inTrain, ]
+testData <- trainCleaned[-inTrain, ]
+control <- trainControl(method="cv", 5)
+model <- train(classe ~ ., data=trainData, method="rf", trControl=control, ntree=250)
+model
+predictTest <- predict(model, testData)
+confusionMatrix(testData$classe, predictTest)
+accuracy <- postResample(predictTest, testData$classe)
+accuracy
+sampleError <- 1 - as.numeric(confusionMatrix(testData$classe, predictTest)$overall[1])
+sampleError
+end.rcode-->
+
+<p>The model had an accuracy of 99.05 and out of sample error is 0.95%</p>
+
+<p>
+Predict Excercise activity using the Model
+</p>
+
+<!--begin.rcode
+result <- predict(model, testCleaned[, -length(names(testCleaned))])
+result
+end.rcode-->
+
+</body>
+</html>
